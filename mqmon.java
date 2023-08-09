@@ -3,14 +3,14 @@
   Name        : mqmon.java
   Author      : Zoff <zoff@zoff.cc>
   Version     :
-  Copyright   : (C) 2021 - 2022 Zoff <zoff@zoff.cc>
+  Copyright   : (C) 2021 - 2023 Zoff <zoff@zoff.cc>
   Description : simple listing of MQ queues and their depth
   ============================================================================
   */
 
 /**
  * mqmon.java
- * Copyright (C) 2021 - 2022 Zoff <zoff@zoff.cc>
+ * Copyright (C) 2021 - 2023 Zoff <zoff@zoff.cc>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,7 +63,7 @@ import com.ibm.mq.headers.pcf.PCFMessageAgent;
 
 public class mqmon {
 
-  private static final String VERSION = "0.99.0";
+  private static final String VERSION = "0.99.1";
   private static final String AUTHOR = "Zoff <zoff@zoff.cc>";
 
   private static Hashtable<String, Object> mqht;
@@ -74,22 +74,33 @@ public class mqmon {
   {
     mqht = new Hashtable<String, Object>();
 
-    if (args.length != 4)
+    if ((args.length < 4) || (args.length > 5))
     {
         usage();
         System.exit(1);
     }
-    else if ((args[0] == "--v") ||(args[0] == "--version") || (args[0] == "-v"))
+    else if ((args[0] == "--v") || (args[0] == "--version") || (args[0] == "-v"))
     {
         usage();
         System.exit(0);
     }
 
+    int delta = 0;
+    int MAX_QDEPTH = 1;
+    if (args.length == 5)
+    {
+        delta = 1;
+        MAX_QDEPTH = Integer.parseInt(args[0]);
+        if (MAX_QDEPTH < 0)
+        {
+            MAX_QDEPTH = 1;
+        }
+    }
 
-    String HOST = args[0]; // Host name or IP address
-    int PORT = Integer.parseInt(args[1]); // Listener port for your queue manager
-    String QMGR = args[2]; // Queue manager name
-    String CHANNEL = args[3]; // Channel name
+    String HOST = args[0 + delta]; // Host name or IP address
+    int PORT = Integer.parseInt(args[1 + delta]); // Listener port for your queue manager
+    String QMGR = args[2 + delta]; // Queue manager name
+    String CHANNEL = args[3 + delta]; // Channel name
     // String APP_USER = "_USER_"; // User name that application uses to connect to MQ
     // String APP_PASSWORD = "_APP_PASSWORD_"; // Password that the application uses to connect to MQ
 
@@ -136,8 +147,11 @@ public class mqmon {
         // Add parameter to request all of the attributes of the queue
         request.addParameter(CMQCFC.MQIACF_Q_ATTRS, attrs);
 
-        // only show queues with depth > 0
-        request.addFilterParameter(CMQC.MQIA_CURRENT_Q_DEPTH, CMQCFC.MQCFOP_GREATER, 0);
+        if (MAX_QDEPTH > 0)
+        {
+            // only show queues with depth > MAX_QDEPTH except when param is zero
+            request.addFilterParameter(CMQC.MQIA_CURRENT_Q_DEPTH, CMQCFC.MQCFOP_GREATER, (MAX_QDEPTH - 1));
+        }
 
         responses = agent.send(request);
 
@@ -155,7 +169,7 @@ public class mqmon {
                 int depth = responses[i].getIntParameterValue(CMQC.MQIA_CURRENT_Q_DEPTH);
                 int maxDepth = responses[i].getIntParameterValue(CMQC.MQIA_MAX_Q_DEPTH);
 
-                if (depth > 0)
+                if ((depth > (MAX_QDEPTH - 1)) || (MAX_QDEPTH == 0))
                 {
                     logger(String.format("%1$" + depth_format_length + "s", "" + depth) + "  " + name);
                 }
@@ -200,9 +214,10 @@ public class mqmon {
 
   public static void usage()
   {
-    System.out.println("Version: mqmon.java " + VERSION + " (C) 2021 - 2022 by " + AUTHOR);
+    System.out.println("Version: mqmon.java " + VERSION + " (C) 2021 - 2023 by " + AUTHOR);
     System.out.println("Usage  : mqmon   --version");
     System.out.println("         mqmon   HOST PORT QManager CHANNEL");
+    System.out.println("         mqmon   -c<num> HOST PORT QManager CHANNEL");
   }
 
   public static void logger(String data)
