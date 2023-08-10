@@ -63,7 +63,7 @@ import com.ibm.mq.headers.pcf.PCFMessageAgent;
 
 public class mqmon {
 
-  private static final String VERSION = "0.99.1";
+  private static final String VERSION = "0.99.2";
   private static final String AUTHOR = "Zoff <zoff@zoff.cc>";
 
   private static Hashtable<String, Object> mqht;
@@ -73,6 +73,7 @@ public class mqmon {
   public static void main(String[] args)
   {
     mqht = new Hashtable<String, Object>();
+    // System.out.println("args: " + args.length);
 
     if ((args.length < 4) || (args.length > 5))
     {
@@ -90,7 +91,7 @@ public class mqmon {
     if (args.length == 5)
     {
         delta = 1;
-        MAX_QDEPTH = Integer.parseInt(args[0]);
+        MAX_QDEPTH = Integer.parseInt(args[0].substring(2));
         if (MAX_QDEPTH < 0)
         {
             MAX_QDEPTH = 1;

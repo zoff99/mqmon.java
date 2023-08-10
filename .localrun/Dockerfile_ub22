@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+        apt-get -y --force-yes install \
+        git \
+        wget \
+        ca-certificates \
+        curl \
+        openjdk-11-jdk \
+        sudo \
+        bc \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN addgroup mqclient
+RUN adduser app
+RUN adduser app mqclient
+RUN wget https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqadv/mqadv_dev920_ubuntu_x86-64.tar.gz -O /tmp/mqadv_dev920_ubuntu_x86-64.tar.gz
